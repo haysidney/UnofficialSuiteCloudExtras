@@ -57,6 +57,9 @@ async function compareFileWithFileCabinet (context) {
 		if (terminal == closedTerminal) {
 			if (closedTerminal.exitStatus && closedTerminal.exitStatus.code) {
 				vscode.window.showErrorMessage('Something went wrong when trying to download the file. Exit Code: ' + terminal.exitStatus.code);
+
+				// Rename our backup of our local copy back to what it was before.
+				await vscode.workspace.fs.rename(currentFileBackupUri, currentFileUri);
 			}
 			else {
 				// Rename the FileCabinet version of the file to a temp filename.
