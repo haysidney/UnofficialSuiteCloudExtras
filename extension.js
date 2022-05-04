@@ -24,22 +24,16 @@ async function compareFileWithFileCabinet (context) {
 	let currentFileUri = vscode.window.activeTextEditor.document.uri;
 	let currentFilePath = currentFileUri.path;
 	let currentFileExtension = path.extname(currentFilePath);
-	let tempFilePath = currentFilePath.replace(currentFileExtension, '_' + Date.now() + currentFileExtension);
-	let tempFileUri = vscode.Uri.file(tempFilePath);
 	let fileCabinetFilePath = currentFilePath.split('/FileCabinet').pop();
 
-	await vscode.workspace.fs.copy(currentFileUri, tempFileUri);
+	let currentFileBackupPath = currentFilePath + '.bak';
+	let currentFileBackupUri = vscode.Uri.file(currentFileBackupPath);
 
-	const tempOnDidCloseTextDocument = vscode.workspace.onDidCloseTextDocument((textDocument) => {
-		if (textDocument.uri.path == tempFileUri.path) {
-			vscode.workspace.fs.delete(textDocument.uri);
+	let tempFilePath = currentFilePath.replace(currentFileExtension, '_' + Date.now() + currentFileExtension);
+	let tempFileUri = vscode.Uri.file(tempFilePath);
 
-			// We want this event handler to dispose of itself.
-			tempOnDidCloseTextDocument.dispose();
-		}
-	});
-	// Add the disposable just in case it never fires
-	context.subscriptions.push(tempOnDidCloseTextDocument);
+	// Rename to .bak because SuiteCloud CLI would overwrite it otherwise.
+	await vscode.workspace.fs.rename(currentFileUri, currentFileBackupUri);
 
 	let terminal = vscode.window.createTerminal({
 		name: 'FileCabinet Compare...',
@@ -58,13 +52,33 @@ async function compareFileWithFileCabinet (context) {
 
 	terminal.sendText(finalCommand);
 
-	const tempOnDidCloseTerminal = vscode.window.onDidCloseTerminal((closedTerminal) => {
+	// Callback for when SuiteCloud CLI is done running.
+	const tempOnDidCloseTerminal = vscode.window.onDidCloseTerminal(async (closedTerminal) => {
 		if (terminal == closedTerminal) {
-			console.log(closedTerminal.exitStatus);
-			if (closedTerminal.exitStatus && closedTerminal.exitStatus.code)
+			if (closedTerminal.exitStatus && closedTerminal.exitStatus.code) {
 				vscode.window.showErrorMessage('Something went wrong when trying to download the file. Exit Code: ' + terminal.exitStatus.code);
-			else
-				vscode.commands.executeCommand("vscode.diff", currentFileUri, tempFileUri, undefined, {preview: true});
+			}
+			else {
+				// Rename the FileCabinet version of the file to a temp filename.
+				await vscode.workspace.fs.rename(currentFileUri, tempFileUri);
+				// Rename our backup of our local copy back to what it was before.
+				await vscode.workspace.fs.rename(currentFileBackupUri, currentFileUri);
+
+				// Kick off a VS Code diff of the two files.
+				vscode.commands.executeCommand("vscode.diff", currentFileUri, tempFileUri, '[DIFF] ' + path.basename(currentFileUri.path), {preview: true});
+
+				// Set up callback to delete the temp file when it's no longer being viewed.
+				const tempOnDidCloseTextDocument = vscode.workspace.onDidCloseTextDocument((textDocument) => {
+					if (textDocument.uri.path == tempFileUri.path) {
+						vscode.workspace.fs.delete(textDocument.uri);
+			
+						// We want this event handler to dispose of itself.
+						tempOnDidCloseTextDocument.dispose();
+					}
+				});
+				// Add the disposable just in case it never fires
+				context.subscriptions.push(tempOnDidCloseTextDocument);
+			}
 			
 			// We want this event handler to dispose of itself.
 			tempOnDidCloseTerminal.dispose();
