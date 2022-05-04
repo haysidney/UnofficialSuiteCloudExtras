@@ -14,6 +14,11 @@ Adds features that are missing from the [SuiteCloud Extension for Visual Studio 
 - SuiteCloud CLI
     * npm install -g @oracle/suitecloud-cli
 
+## Installation
+
+- Install the requirements from above (and make sure they're up to date!)
+- Go to [Releases](https://github.com/haysidney/UnofficialSuiteCloudExtras/releases) and install the VSIX file in VS Code via Extensions -> Install from VSIX...
+
 ## Release Notes
 ### v0.9.0
 
