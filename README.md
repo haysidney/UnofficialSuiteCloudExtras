@@ -17,6 +17,8 @@ Adds features that are missing from the [SuiteCloud Extension for Visual Studio 
 
 - Install the requirements from above (and make sure they're up to date!)
 - Go to [Releases](https://github.com/haysidney/UnofficialSuiteCloudExtras/releases) and install the VSIX file in VS Code via Extensions -> Install from VSIX...
+- In an Admin PowerShell prompt, run: (if you haven't already)
+  * Set-ExecutionPolicy RemoteSigned
 
 ## Release Notes
 ### v0.9.0
