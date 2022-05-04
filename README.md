@@ -21,6 +21,10 @@ Adds features that are missing from the [SuiteCloud Extension for Visual Studio 
   * Set-ExecutionPolicy RemoteSigned
 
 ## Release Notes
+### v0.9.1
+
+Fixed a bug where files would have .bak appended to them if an error occurred when running the SuiteCloud CLI.
+
 ### v0.9.0
 
 Initial beta of Unofficial SuiteCloud Extras.
