@@ -2,7 +2,8 @@
   "name": "unofficial-suitecloud-extras",
 	"displayName": "Unofficial SuiteCloud Extras",
 	"description": "",
-	"version": "0.9.0",
+	"version": "0.9.1",
+	"publisher": "Sidney Hays",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/haysidney/UnofficialSuiteCloudExtras.git"
