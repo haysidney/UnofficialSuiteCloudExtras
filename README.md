@@ -8,11 +8,10 @@ Adds features that are missing from the [SuiteCloud Extension for Visual Studio 
 
 ## Requirements
 
-- [SuiteCloud CLI for Node.js](https://netsuite.custhelp.com/app/answers/detail/a_id/91799)
 - [JDK 11](https://www.oracle.com/java/technologies/downloads/#java11)
 - [Node.js LTS](https://nodejs.org/en/download/)
-- SuiteCloud CLI
-    * npm install -g @oracle/suitecloud-cli
+- [SuiteCloud CLI for Node.js](https://netsuite.custhelp.com/app/answers/detail/a_id/91799)
+   * npm install -g @oracle/suitecloud-cli
 
 ## Installation
 
