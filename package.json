@@ -17,7 +17,7 @@
 		"commands": [
 			{
 				"command": "unofficial-suitecloud-extras.compareFileWithFileCabinet",
-				"title": "Compare with File Cabinet"
+				"title": "SuiteCloud Extras: Compare with File Cabinet"
 			}
 		]
 	},
