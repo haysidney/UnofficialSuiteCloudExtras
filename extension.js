@@ -4,14 +4,37 @@ const vscode = require('vscode');
 const path = require('path');
 
 const compareFileWithFileCabinetBeginMessage = 'Downloading file from NetSuite...';
+const deployObjectBeginMessage = 'Deploying object to NetSuite...';
 
 const suiteCloudImportSuccessPattern = 'The following files were imported:';
+const suiteCloudDeploySuccessPattern = 'Installation COMPLETE (';
+
+const objectsPathPattern = 'src/Objects/';
+const objectsTempDeployFolderName = '.tempDeploy';
+
+const deployObjectDeployXml =
+`<deploy>
+	<configuration>
+		<path>~/AccountConfiguration/.doNotDeploy/*</path>
+	</configuration>
+	<files>
+		<path>~/FileCabinet/.doNotDeploy/*</path>
+	</files>
+	<objects>
+		<path>~/Objects/${objectsTempDeployFolderName}/*</path>
+	</objects>
+	<translationimports>
+		<path>~/Translations/.doNotDeploy/*</path>
+	</translationimports>
+</deploy>`;
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
 	context.subscriptions.push(vscode.commands.registerCommand('unofficial-suitecloud-extras.compareFileWithFileCabinet', () => { compareFileWithFileCabinet(context) }));
+
+	context.subscriptions.push(vscode.commands.registerCommand('unofficial-suitecloud-extras.deployObject', () => { deployObject(context) }));
 }
 
 async function compareFileWithFileCabinet (context) {
@@ -35,6 +58,7 @@ async function compareFileWithFileCabinet (context) {
 	// Rename to .bak because SuiteCloud CLI would overwrite it otherwise.
 	await vscode.workspace.fs.rename(currentFileUri, currentFileBackupUri);
 
+	// TODO Support non-powershell environments.
 	let terminal = vscode.window.createTerminal({
 		name: 'FileCabinet Compare...',
 		message: compareFileWithFileCabinetBeginMessage + '\n',
@@ -89,6 +113,59 @@ async function compareFileWithFileCabinet (context) {
 	});
 	// Add the disposable just in case it never fires
 	context.subscriptions.push(tempOnDidCloseTerminal);
+}
+
+async function deployObject (context) {
+	// TODO Add a setting for showing the Terminal.
+	// TODO If said setting is hiding the terminal, then we'll show the following.
+	vscode.window.showInformationMessage(deployObjectBeginMessage);
+
+	await vscode.window.activeTextEditor.document.save();
+
+	const currentFileUri = vscode.window.activeTextEditor.document.uri;
+	const currentFilePath = currentFileUri.path;
+	const currentFileName = path.basename(currentFilePath);
+	const currentFileParentFolderPath = currentFilePath.slice(0, currentFilePath.indexOf(currentFileName));
+	const currentFileParentFolderUri = vscode.Uri.file(currentFileParentFolderPath);
+
+	// Make sure we're actually trying to deploy Objects.
+	const objectsPathPatternMatchIndex = currentFilePath.indexOf(objectsPathPattern);
+	if (objectsPathPatternMatchIndex == -1)
+		return;
+
+	const projectRootPath = currentFilePath.slice(0, objectsPathPatternMatchIndex);
+	const objectsPath = projectRootPath + objectsPathPattern;
+	const objectsTempDeployPath = objectsPath + objectsTempDeployFolderName + '/';
+	console.log(objectsTempDeployPath);
+	const objectsTempDeployUri = vscode.Uri.file(objectsTempDeployPath);
+	
+	// Create the temp deploy folder.
+	await vscode.workspace.fs.createDirectory(objectsTempDeployUri);
+
+	// Copy the file(s) to the temp deploy folder.
+	const tempDeployFileUri = vscode.Uri.file(objectsTempDeployPath + currentFileName);
+	await vscode.workspace.fs.copy(currentFileUri, tempDeployFileUri);
+	
+	// Backup the deploy.xml
+	const deployXmlPath = projectRootPath + 'src/deploy.xml';
+	const deployXmlUri = vscode.Uri.file(deployXmlPath);
+	const tempDeployXmlPath = deployXmlPath + '.bak';
+	const tempDeployXmlUri = vscode.Uri.file(tempDeployXmlPath);
+	await vscode.workspace.fs.copy(deployXmlUri, tempDeployXmlUri, { overwrite: true });
+
+	// Modify the deploy.xml to only deploy objects in the temp deploy folder.
+	await vscode.workspace.fs.writeFile(deployXmlUri, deployObjectDeployXml);
+
+	// TODO Deploy the object(s).
+
+	// Delete the temp deploy folder.
+	await vscode.workspace.fs.delete(objectsTempDeployUri, { recursive: true, useTrash: true });
+
+	// Delete the modified deploy.xml.
+	await vscode.workspace.fs.delete(deployXmlUri, { recursive: false, useTrash: false });
+
+	// Rename the backup back to the original name.
+	await vscode.workspace.fs.rename(tempDeployFileUri, deployXmlUri);
 }
 
 // this method is called when your extension is deactivated

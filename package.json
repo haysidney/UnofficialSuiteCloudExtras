@@ -15,7 +15,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:unofficial-suitecloud-extras.compareFileWithFileCabinet"
+		"onCommand:unofficial-suitecloud-extras.compareFileWithFileCabinet",
+		"onCommand:unofficial-suitecloud-extras.deployObject"
 	],
 	"main": "./extension.js",
 	"contributes": {
@@ -23,6 +24,10 @@
 			{
 				"command": "unofficial-suitecloud-extras.compareFileWithFileCabinet",
 				"title": "SuiteCloud Extras: Compare with File Cabinet"
+			},
+			{
+				"command": "unofficial-suitecloud-extras.deployObject",
+				"title": "SuiteCloud Extras: Deploy Object"
 			}
 		]
 	},
